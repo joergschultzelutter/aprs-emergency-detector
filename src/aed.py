@@ -121,3 +121,4 @@ if __name__ == "__main__":
         logger.info("received exception!")
         if AIS:
             AIS.close()
+            logger.info(msg="Closed APRS connection to APRS_IS")
