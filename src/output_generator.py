@@ -21,7 +21,6 @@
 import logging
 import apprise
 import os
-import maidenhead
 
 # Set up the global logger variable
 logging.basicConfig(
@@ -82,11 +81,10 @@ def generate_apprise_message(
     apobj.add(config)
 
     # Create the body data
-    mh = maidenhead.to_maiden(lat=latitude, lon=longitude, precision=4)
 
     if abbreviated_message_format:
         apprise_body = (
-            f"!Emergency Beacon! CS {callsign} Pos:{mh} Spd:{speed:.1f} Dir:{course}"
+            f"!Emergency Beacon! CS {callsign} Pos:xxxx Spd:{speed:.1f} Dir:{course}"
         )
     else:
         apprise_body = "blah blah"

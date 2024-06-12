@@ -3,3 +3,5 @@ aprslib
 maidenhead
 git+https://github.com/flopp/py-staticmaps#egg-py-staticmaps
 expiringdict
+utm
+mgrs
