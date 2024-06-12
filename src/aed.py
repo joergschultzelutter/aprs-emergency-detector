@@ -21,9 +21,12 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 import logging
+import time
+
 import aprslib
 import sys
 import signal
+from expiringdict import ExpiringDict
 
 # APRS-IS communication parameters
 # This program is only going to receive
@@ -47,6 +50,14 @@ APRS_EMERGENCY = "Emergency"
 
 # These are the APRS message types that we actually want to search for
 AED_MESSAGE_TYPES = (APRS_EMERGENCY, APRS_PRIORITY)
+
+# TTL value for messages in hours
+# If we detect the same message content within this time span, we will
+# ignore the message UNLESS content such as position data et al changes
+APRS_TTL = 4
+
+# Max number of APRS TTL entries
+APRS_TTL_MAX_MESSAGES = 1000
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -95,6 +106,10 @@ if __name__ == "__main__":
     logger.info(msg="Registering SIGTERM handler for safe shutdown...")
     signal.signal(signal.SIGTERM, signal_term_handler)
 
+    message_cache = ExpiringDict(
+        max_len=APRS_TTL_MAX_MESSAGES, max_age_seconds=60 * APRS_TTL
+    )
+
     try:
         while True:
             AIS = aprslib.IS(aprsis_callsign, aprsis_passcode)
@@ -114,8 +129,10 @@ if __name__ == "__main__":
                 logger.info("Have left the callback")
                 logger.info(msg="Closing APRS connection to APRS_IS")
                 AIS.close()
+                time.sleep(10)
             else:
                 logger.info(msg="Cannot re-establish connection to APRS_IS")
+                time.sleep(10)
 
     except (KeyboardInterrupt, SystemExit):
         logger.info("received exception!")
