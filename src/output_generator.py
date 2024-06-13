@@ -25,6 +25,7 @@ from apprise.attachment.memory import AttachMemory
 import sys
 import staticmaps
 import io
+from geo_conversion_modules import convert_latlon_to_mgrs,convert_latlon_to_dms,convert_latlon_to_utm,convert_latlon_to_maidenhead
 
 # Set up the global logger variable
 logging.basicConfig(
@@ -85,13 +86,25 @@ def generate_apprise_message(
     apobj.add(config)
 
     # Create the body data
+    #
+    # Get the image and attach, if successful
+    image_attachment = None
+    apprise_attachment = None
+    if not abbreviated_message_format:
+        image_attachment = render_png_map(aprs_latitude=latitude,aprs_longitude=longitude)
+        if image_attachment:
+            # Initialize Apprise in-memory object
+            apprise_attachment = AttachMemory(content="attachment-content-here")
 
-    # Initialize
-    attach = AttachMemory(content="attachment-content-here")
+    # convert lat/lon to geodata formats
+    geo_utm = convert_latlon_to_utm(latitude=latitude,longitude=longitude)
+    geo_maidenhead = convert_latlon_to_maidenhead(latitude=latitude,longitude=longitude)
+    geo_mgrs = convert_latlon_to_mgrs(latitude=latitude,longitude=longitude)
+    geo_dms = convert_latlon_to_dms(latitude=latitude,longitude=longitude)
 
     if abbreviated_message_format:
         apprise_body = (
-            f"!Emergency Beacon! CS {callsign} Pos:xxxx Spd:{speed:.1f} Dir:{course}"
+            f"!Emergency Beacon! CS {callsign} Pos:{geo_maidenhead} Spd:{speed:.1f} Dir:{course}"
         )
     else:
         apprise_body = "blah blah"
@@ -104,7 +117,7 @@ def generate_apprise_message(
     notify_type = apprise.NotifyType.FAILURE
 
     # Send the notification
-    if abbreviated_message_format:
+    if abbreviated_message_format or not apprise_attachment:
         apobj.notify(
             body=apprise_body,
             title=apprise_header,
@@ -116,7 +129,7 @@ def generate_apprise_message(
             body=apprise_body,
             title=apprise_header,
             tag="all",
-            #        attach=html_image,
+            attach=apprise_attachment,
             notify_type=notify_type,
         )
 
