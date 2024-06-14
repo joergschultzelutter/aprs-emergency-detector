@@ -102,6 +102,8 @@ def generate_apprise_message(
     geo_mgrs = convert_latlon_to_mgrs(latitude=latitude,longitude=longitude)
     geo_dms = convert_latlon_to_dms(latitude=latitude,longitude=longitude)
 
+    # Generate the body data, dependent on whether we need to send an abbreviated
+    # message or not
     if abbreviated_message_format:
         apprise_body = (
             f"!Emergency Beacon! CS {callsign} Pos:{geo_maidenhead} Spd:{speed:.1f} Dir:{course}"
@@ -113,10 +115,11 @@ def generate_apprise_message(
     # Create the message header
     apprise_header = f"<u><i>APRS Emergency Detector</i></u>\n\n"
 
-    # Set Apprise's notify icon
+    # Set Apprise's notify icon. We want the user's attention
+    # so let's go for a FAILURE icon
     notify_type = apprise.NotifyType.FAILURE
 
-    # Send the notification
+    # Send the notification, dependent on the selected mode
     if abbreviated_message_format or not apprise_attachment:
         apobj.notify(
             body=apprise_body,
