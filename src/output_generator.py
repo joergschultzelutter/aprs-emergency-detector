@@ -97,10 +97,10 @@ def generate_apprise_message(
             apprise_attachment = AttachMemory(content="attachment-content-here")
 
     # convert lat/lon to geodata formats
-    geo_utm = convert_latlon_to_utm(latitude=latitude,longitude=longitude)
+    zone_number, zone_letter, easting, northing  = convert_latlon_to_utm(latitude=latitude,longitude=longitude)
+    geo_utm = f"{zone_number} {zone_letter} {easting} {northing}"
     geo_maidenhead = convert_latlon_to_maidenhead(latitude=latitude,longitude=longitude)
     geo_mgrs = convert_latlon_to_mgrs(latitude=latitude,longitude=longitude)
-    geo_dms = convert_latlon_to_dms(latitude=latitude,longitude=longitude)
 
     # Generate the body data, dependent on whether we need to send an abbreviated
     # message or not
@@ -109,7 +109,14 @@ def generate_apprise_message(
             f"!Emergency Beacon! CS {callsign} Pos:{geo_maidenhead} Spd:{speed:.1f} Dir:{course}"
         )
     else:
-        apprise_body = "blah blah"
+        apprise_body = f"<b>Emergency Beacon detected!</b>{newline}{newline}"
+        apprise_body += f"<b>Callsign:</b> {callsign}{newline}"
+        apprise_body += f"<b>Speed</b>: {speed}{newline}"
+        apprise_body += f"<b>Direction</b>: {course}{newline}{newline}"
+        apprise_body += f"<b>Lat:</b> {latitude} / Lon:</b> {longitude}{newline}"
+        apprise_body += f"<b>UTM:</b> {geo_utm}{newline}"
+        apprise_body += f"<b>MGRS:</b> {geo_mgrs}{newline}"
+        apprise_body += f"<b>Maidenhead:</b> {geo_maidenhead}"
 
     # We are done with preparing the message body
     # Create the message header
