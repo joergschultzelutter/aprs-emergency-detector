@@ -1,0 +1,17 @@
+[aed_config]
+
+# API key for www.aprs.fi access
+# API key NOT_CONFIGURED disable aprs.fi access
+aprsdotfi_api_key = NOT_CONFIGURED
+
+# Lat / Lon coordinates that we intend to monitor
+# Format: lat,lon
+# Example: 51.838879,8.32678
+aed_my_position = 51.838879,8.32678
+
+# APRS Mic-E categories that we are going to monitor
+# Valid values: OFF_DUTY, EN_ROUTE, IN_SERVICE,
+#               RETURNING, COMMITTED, SPECIAL,
+#               PRIORITY, EMERGENCY
+
+aed_active_categories = PRIORITY,EMERGENCY

@@ -5,3 +5,4 @@ git+https://github.com/flopp/py-staticmaps#egg-py-staticmaps[cairo]
 expiringdict
 utm
 mgrs
+configparser

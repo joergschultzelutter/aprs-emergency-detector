@@ -39,17 +39,17 @@ aprsis_server_port = 14580
 AIS = None
 
 # These are the _possible_ Mic-E message types
-APRS_OFF_DUTY = "M0: Off Duty"
-APRS_EN_ROUTE = "M1: En Route"
-APRS_IN_SERVICE = "M2: In Service"
-APRS_RETURNING = "M3: Returning"
-APRS_COMMITTED = "M4: Committed"
-APRS_SPECIAL = "M5: Special"
-APRS_PRIORITY = "M6: Priority"
-APRS_EMERGENCY = "Emergency"
+APRS_MICE_OFF_DUTY = "M0: Off Duty"
+APRS_MICE_EN_ROUTE = "M1: En Route"
+APRS_MICE_IN_SERVICE = "M2: In Service"
+APRS_MICE_RETURNING = "M3: Returning"
+APRS_MICE_COMMITTED = "M4: Committed"
+APRS_MICE_SPECIAL = "M5: Special"
+APRS_MICE_PRIORITY = "M6: Priority"
+APRS_MICE_EMERGENCY = "Emergency"
 
 # These are the APRS message types that we actually want to search for
-AED_MESSAGE_TYPES = (APRS_EMERGENCY, APRS_PRIORITY)
+AED_MICE_MESSAGE_TYPES = (APRS_MICE_EMERGENCY, APRS_MICE_PRIORITY)
 
 # TTL value for messages in hours
 # If we detect the same message content within this time span, we will
@@ -95,7 +95,7 @@ def mycallback(raw_aprs_packet):
         if fmt == "mic-e":
             if "mtype" in raw_aprs_packet:
                 mtype = raw_aprs_packet["mtype"]
-                if mtype in AED_MESSAGE_TYPES:
+                if mtype in AED_MICE_MESSAGE_TYPES:
                     logger.info(raw_aprs_packet)
 
 
