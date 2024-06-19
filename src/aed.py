@@ -27,6 +27,7 @@ import aprslib
 import sys
 import signal
 from expiringdict import ExpiringDict
+from output_generator import generate_apprise_message
 from utils import (
     signal_term_handler,
     get_program_config_from_file,
@@ -93,8 +94,65 @@ def mycallback(raw_aprs_packet):
         fmt = raw_aprs_packet["format"]
         if fmt == "mic-e":
             if "mtype" in raw_aprs_packet:
+                # check if the mtype is part of the list of
+                # categories that we are to monitor
                 mtype = raw_aprs_packet["mtype"]
                 if mtype in aed_categories:
+                    # we have a match!
+
+                    aed_mice_category = None
+                    # get our human readable category
+                    for key, value in AED_APRS_MAPPING.items():
+                        if value == mtype:
+                            aed_mice_category = key
+                            break
+
+                    # get the remaining values from the message
+                    mice_lat = mice_lon = mice_from = None
+                    mice_speed = mice_course = None
+                    if "latitude" in raw_aprs_packet:
+                        mice_lat = round(raw_aprs_packet["latitude"], 6)
+                    if "longitude" in raw_aprs_packet:
+                        mice_lon = round(raw_aprs_packet["longitude"], 6)
+                    if "from" in raw_aprs_packet:
+                        mice_from = raw_aprs_packet["from"]
+                    if "speed" in raw_aprs_packet:
+                        mice_speed = round(raw_aprs_packet["speed"], 1)
+                    if "course" in raw_aprs_packet:
+                        mice_course = raw_aprs_packet["course"]
+
+                    # and generate the Apprise message(s), dependent on how many
+                    # config files the user has specified
+                    #
+                    # this is the "full message" branch which includes images
+                    #
+                    if aed_messenger_configfile:
+                        generate_apprise_message(
+                            apprise_config_file=aed_messenger_configfile,
+                            callsign=mice_from,
+                            latitude_aprs=mice_lat,
+                            longitude_aprs=mice_lon,
+                            latitude_aed=aed_latitude,
+                            longitude_aed=aed_longitude,
+                            course=mice_course,
+                            speed=mice_speed,
+                            category=aed_mice_category,
+                            abbreviated_message_format=False,
+                        )
+
+                    # and this is the branch where we only send an abbreviated message to the user
+                    if aed_sms_messenger_configfile:
+                        generate_apprise_message(
+                            apprise_config_file=aed_sms_messenger_configfile,
+                            callsign=mice_from,
+                            latitude=mice_lat,
+                            longitude=mice_lon,
+                            course=mice_course,
+                            speed=mice_speed,
+                            category=aed_mice_category,
+                            abbreviated_message_format=True,
+                        )
+
                     logger.info(raw_aprs_packet)
 
 
@@ -111,7 +169,7 @@ if __name__ == "__main__":
     ) = get_command_line_params()
 
     # and then get the static config from our configuration file
-    success, aed_mice_message_types, latitude, longitude, range_detection = (
+    success, aed_mice_message_types, aed_latitude, aed_longitude, range_detection = (
         get_program_config_from_file(config_filename=aed_configfile)
     )
     if not success:
@@ -133,8 +191,8 @@ if __name__ == "__main__":
     )
 
     # amend the APRS-IS filter in case we have received lat/lon/range
-    if latitude and longitude and range_detection:
-        aprsis_filter += f" r/{latitude}/{longitude}/{range_detection}"
+    if aed_latitude and aed_longitude and range_detection:
+        aprsis_filter += f" r/{aed_latitude}/{aed_longitude}/{range_detection}"
 
     # and enter our eternal loop
     try:

@@ -21,11 +21,18 @@
 import logging
 import apprise
 import os
-from apprise.attachment.memory import AttachMemory
+
+# from apprise.attachment.memory import AttachMemory
 import sys
 import staticmaps
 import io
-from geo_conversion_modules import convert_latlon_to_mgrs,convert_latlon_to_dms,convert_latlon_to_utm,convert_latlon_to_maidenhead
+from geo_conversion_modules import (
+    convert_latlon_to_mgrs,
+    convert_latlon_to_dms,
+    convert_latlon_to_utm,
+    convert_latlon_to_maidenhead,
+    haversine,
+)
 
 # Set up the global logger variable
 logging.basicConfig(
@@ -37,10 +44,13 @@ logger = logging.getLogger(__name__)
 def generate_apprise_message(
     apprise_config_file: str,
     callsign: str,
-    latitude: float,
-    longitude: float,
+    latitude_aprs: float,
+    longitude_aprs: float,
+    latitude_aed: float,
+    longitude_aed: float,
     course: int,
     speed: float,
+    category: str,
     abbreviated_message_format: bool = False,
 ):
     """
@@ -50,9 +60,25 @@ def generate_apprise_message(
     ==========
     apprise_config_file: 'str'
         Apprise Yaml configuration file
+    callsign: 'str'
+        User who sent the message
+    latitude_aprs: 'float'
+        APRS User's latitude
+    longitude_aprs: 'float"
+        APRS User's longitude
+    latitude_aed: 'float'
+        AED User's latitude
+    longitude_aed: 'float"
+        AED User's longitude
+    course: 'int'
+        User's course
+    speed: 'float'
+        user's speed
+    category: 'str'
+        Human-readable Mic-E category, e.g. EN_ROUTE
     abbreviated_message_format: 'bool'
         False: Generate a full-text message
-        True: generate 1..n SMS-like messages without image, title et al
+        True: generate SMS-like message without image, title et al
     Returns
     =======
     success: 'bool'
@@ -91,36 +117,54 @@ def generate_apprise_message(
     image_attachment = None
     apprise_attachment = None
     if not abbreviated_message_format:
-        image_attachment = render_png_map(aprs_latitude=latitude,aprs_longitude=longitude)
+        image_attachment = render_png_map(
+            aprs_latitude=latitude_aprs, aprs_longitude=longitude_aprs
+        )
+
+    """
+
         if image_attachment:
             # Initialize Apprise in-memory object
             apprise_attachment = AttachMemory(content="attachment-content-here")
-
+    """
     # convert lat/lon to geodata formats
-    zone_number, zone_letter, easting, northing  = convert_latlon_to_utm(latitude=latitude,longitude=longitude)
+    zone_number, zone_letter, easting, northing = convert_latlon_to_utm(
+        latitude=latitude_aprs, longitude=longitude_aprs
+    )
     geo_utm = f"{zone_number} {zone_letter} {easting} {northing}"
-    geo_maidenhead = convert_latlon_to_maidenhead(latitude=latitude,longitude=longitude)
-    geo_mgrs = convert_latlon_to_mgrs(latitude=latitude,longitude=longitude)
+    geo_maidenhead = convert_latlon_to_maidenhead(
+        latitude=latitude_aprs, longitude=longitude_aprs
+    )
+    geo_mgrs = convert_latlon_to_mgrs(latitude=latitude_aprs, longitude=longitude_aprs)
+
+    # get the distance to the APRS coordinates
+    distance, bearing, heading = haversine(
+        latitude1=latitude_aed,
+        longitude1=longitude_aed,
+        latitude2=latitude_aprs,
+        longitude2=longitude_aprs,
+    )
 
     # Generate the body data, dependent on whether we need to send an abbreviated
     # message or not
     if abbreviated_message_format:
-        apprise_body = (
-            f"!Emergency Beacon! CS {callsign} Pos:{geo_maidenhead} Spd:{speed:.1f} Dir:{course}"
-        )
+        apprise_body = f"!{category}! CS:{callsign} Pos:{geo_maidenhead} Spd:{speed:.1f} Dir:{course} Dst:{round(distance)}km"
     else:
-        apprise_body = f"<b>Emergency Beacon detected!</b>{newline}{newline}"
+        apprise_body = f"<b>Beacon '{category}' detected!</b>{newline}{newline}"
         apprise_body += f"<b>Callsign:</b> {callsign}{newline}"
         apprise_body += f"<b>Speed</b>: {speed}{newline}"
         apprise_body += f"<b>Direction</b>: {course}{newline}{newline}"
-        apprise_body += f"<b>Lat:</b> {latitude} / Lon:</b> {longitude}{newline}"
+        apprise_body += (
+            f"<b>Lat:</b> {latitude_aprs} / <b>Lon:</b> {longitude_aprs}{newline}"
+        )
         apprise_body += f"<b>UTM:</b> {geo_utm}{newline}"
         apprise_body += f"<b>MGRS:</b> {geo_mgrs}{newline}"
-        apprise_body += f"<b>Maidenhead:</b> {geo_maidenhead}"
+        apprise_body += f"<b>Maidenhead:</b> {geo_maidenhead}{newline}{newline}"
+        apprise_body += f"Distance from my coordinates: {round(distance)} km / {round(distance*0.621371)} mi"
 
     # We are done with preparing the message body
     # Create the message header
-    apprise_header = f"<u><i>APRS Emergency Detector</i></u>\n\n"
+    apprise_header = f"<u><i>APRS Emergency Beacon Detector</i></u>"
 
     # Set Apprise's notify icon. We want the user's attention
     # so let's go for a FAILURE icon
