@@ -17,4 +17,9 @@ aed_active_categories = PRIORITY,EMERGENCY
 # this range relative to the user's lat/lon position
 # specify value NONE if you do not want to limit
 # the range detection
+#
+# Details: https://www.aprs-is.net/javAPRSFilter.aspx
+#
+# Value's unit of measure: km
+#
 aed_range_limit = NONE

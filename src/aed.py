@@ -143,8 +143,8 @@ if __name__ == "__main__":
             AIS.set_server(aprsis_server_name, aprsis_server_port)
             AIS.set_filter(aprsis_filter)
             logger.info(
-                msg=f"Establish connection to APRS_IS: server={aprsis_server_name},"
-                f"port={aprsis_server_port},filter={aprsis_filter}"
+                msg=f"Trying to establish connection to APRS_IS: server={aprsis_server_name},"
+                f"port={aprsis_server_port},filter={aprsis_filter},"
                 f"APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
             )
 
