@@ -160,7 +160,7 @@ def generate_apprise_message(
         apprise_body += f"<b>UTM:</b> {geo_utm}{newline}"
         apprise_body += f"<b>MGRS:</b> {geo_mgrs}{newline}"
         apprise_body += f"<b>Maidenhead:</b> {geo_maidenhead}{newline}{newline}"
-        apprise_body += f"Distance from my coordinates: {round(distance)} km / {round(distance*0.621371)} mi"
+        apprise_body += f"Distance from my coordinates: {round(distance)} km / {round(distance*0.621371)} mi, bearing {round(bearing)} heading {heading}"
 
     # We are done with preparing the message body
     # Create the message header
