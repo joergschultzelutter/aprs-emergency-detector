@@ -1,6 +1,6 @@
 [aed_config]
 
-# lat / lon coordinates that we intend to monitor
+# lat / lon coordinates where we are located at
 # Format: lat,lon
 # Example: 51.838879,8.32678
 aed_my_position = 51.838879,8.32678

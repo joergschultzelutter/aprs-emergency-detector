@@ -88,9 +88,11 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
 
         # get the list of Mic-E categories that we are to examine
         aed_acs = config.get("aed_config", "aed_active_categories")
-        aed_active_categories = [
+        aed_active_categories_raw = [
             s.strip().upper() for s in aed_acs.split(",") if aed_acs != ""
         ]
+        # remove any potential dupes
+        aed_active_categories = list(set(aed_active_categories_raw))
         if len(aed_active_categories) == 0:
             logger.info(
                 msg="Config file error; at least one APRS Mic-E category needs to be specified"
