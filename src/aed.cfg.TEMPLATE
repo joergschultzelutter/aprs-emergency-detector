@@ -15,6 +15,6 @@ aed_active_categories = PRIORITY,EMERGENCY
 # Range limitation; in case an integer is specified,
 # we will only consider Mic-E position messages from within
 # this range relative to the user's lat/lon position
-# specify value "NONE" if you do not want to limit
+# specify value NONE if you do not want to limit
 # the range detection
-aed_range_limit = "NONE"
+aed_range_limit = NONE

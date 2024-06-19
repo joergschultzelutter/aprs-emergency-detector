@@ -49,11 +49,11 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
         True if successful
     aed_active_categories: 'list'
         List item, containing the Mic-E categories that we want to examine
-    lat: 'float'
+    aed_lat: 'float'
         Latitude of the user's position
-    lon: 'float'
+    aed_lon: 'float'
         Longitude
-    range_limit: 'int'
+    aed_range_limit: 'int'
         range detection limit in km, relative to our position
         see https://www.aprs-is.net/javAPRSFilter.aspx (Range filter) for details
         'None' if no value has been specified
@@ -76,13 +76,13 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
         lon_str = latlon[1]
 
         try:
-            lat = float(lat_str)
-            lon = float(lon_str)
+            aed_lat = float(lat_str)
+            aed_lon = float(lon_str)
         except (ValueError, OverflowError):
             logger.info(msg="Config file error; invalid lat/lon position")
             raise ValueError("Error in config file")
 
-        if abs(lat) > 90.0 or abs(lon) > 180.0:
+        if abs(aed_lat) > 90.0 or abs(aed_lon) > 180.0:
             logger.info(msg="Config file error; invalid lat/lon position")
             raise ValueError("Error in config file")
 
@@ -126,15 +126,15 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
         logger.info(
             msg="Error in configuration file; Check if your config format is correct."
         )
-        lat = lon = aed_range_limit = None
+        aed_lat = aed_lon = aed_range_limit = None
         aed_active_categories = None
         success = False
 
     return (
         success,
         aed_active_categories,
-        lat,
-        lon,
+        aed_lat,
+        aed_lon,
         aed_range_limit,
     )
 
@@ -301,22 +301,26 @@ def get_command_line_params():
     # if yes, check if that file exists
     if aed_messenger_configfile:
         if not does_file_exist(aed_messenger_configfile):
-            raise ValueError(
-                f"Provided messenger config file '{aed_messenger_configfile}' does not exist"
+
+            logger.error(
+                msg=f"Provided messenger config file '{aed_messenger_configfile}' does not exist"
             )
+            raise ValueError("Configuration file error")
 
     # Did the user specify an optional generic message file for SMS messengers?
     # if yes, check if that file exists
     if aed_sms_messenger_configfile:
         if not does_file_exist(aed_sms_messenger_configfile):
-            raise ValueError(
-                f"Provided short message config file '{aed_sms_messenger_configfile}' does not exist"
+            logger.error(
+                msg=f"Provided short message config file '{aed_sms_messenger_configfile}' does not exist"
             )
+            raise ValueError("Configuration file error")
 
     if not aed_messenger_configfile and not aed_sms_messenger_configfile:
-        raise ValueError(
-            "At least one Apprise messenger config file needs to be specified; check the program documentation"
+        logger.error(
+            msg="At least one Apprise messenger config file needs to be specified; check the program documentation"
         )
+        raise ValueError("Configuration file error")
 
     return (
         aed_configfile,

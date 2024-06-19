@@ -53,8 +53,28 @@ APRS_MICE_SPECIAL = "M5: Special"
 APRS_MICE_PRIORITY = "M6: Priority"
 APRS_MICE_EMERGENCY = "Emergency"
 
-# These are the APRS message types that we actually want to search for
-AED_MICE_MESSAGE_TYPES = (APRS_MICE_EMERGENCY, APRS_MICE_PRIORITY)
+# these are the possible Mic-E message types that we might receive
+# from the command line parser
+AED_MICE_OFF_DUTY = "OFF_DUTY"
+AED_MICE_EN_ROUTE = "EN_ROUTE"
+AED_MICE_IN_SERVICE = "IN_SERVICE"
+AED_MICE_RETURNING = "RETURNING"
+AED_MICE_COMMITTED = "COMMITTED"
+AED_MICE_SPECIAL = "SPECIAL"
+AED_MICE_PRIORITY = "PRIORITY"
+AED_MICE_EMERGENCY = "EMERGENCY"
+
+# this is the command line parser vs. message_type_mapping
+AED_APRS_MAPPING = {
+    AED_MICE_OFF_DUTY: APRS_MICE_OFF_DUTY,
+    AED_MICE_EN_ROUTE: APRS_MICE_EN_ROUTE,
+    AED_MICE_IN_SERVICE: APRS_MICE_IN_SERVICE,
+    AED_MICE_RETURNING: APRS_MICE_RETURNING,
+    AED_MICE_COMMITTED: APRS_MICE_COMMITTED,
+    AED_MICE_SPECIAL: APRS_MICE_SPECIAL,
+    AED_MICE_PRIORITY: APRS_MICE_PRIORITY,
+    AED_MICE_EMERGENCY: APRS_MICE_EMERGENCY,
+}
 
 # Max number of APRS TTL entries
 APRS_TTL_MAX_MESSAGES = 1000
@@ -74,7 +94,7 @@ def mycallback(raw_aprs_packet):
         if fmt == "mic-e":
             if "mtype" in raw_aprs_packet:
                 mtype = raw_aprs_packet["mtype"]
-                if mtype in aed_mice_message_types:
+                if mtype in aed_categories:
                     logger.info(raw_aprs_packet)
 
 
@@ -86,25 +106,37 @@ if __name__ == "__main__":
         aed_configfile,
         aed_messenger_configfile,
         aed_sms_messenger_configfile,
-        aed_generate_test_message,
         aed_time_to_live,
+        aed_generate_test_message,
     ) = get_command_line_params()
 
     # and then get the static config from our configuration file
-    success, aed_mice_message_types, latitude, longitude = get_program_config_from_file(
-        config_filename=aed_configfile
+    success, aed_mice_message_types, latitude, longitude, range_detection = (
+        get_program_config_from_file(config_filename=aed_configfile)
     )
     if not success:
         sys.exit(0)
+
+    # Determine the categories that we need to investigate
+    aed_categories = []
+    for aed_mice_message_type in aed_mice_message_types:
+        if aed_mice_message_type in AED_APRS_MAPPING:
+            aed_categories.append(AED_APRS_MAPPING[aed_mice_message_type])
 
     # Register the SIGTERM handler; this will allow a safe shutdown of the program
     logger.info(msg="Registering SIGTERM handler for safe shutdown...")
     signal.signal(signal.SIGTERM, signal_term_handler)
 
+    # set up the expiring dict
     message_cache = ExpiringDict(
         max_len=APRS_TTL_MAX_MESSAGES, max_age_seconds=aed_time_to_live
     )
 
+    # amend the APRS-IS filter in case we have received lat/lon/range
+    if latitude and longitude and range_detection:
+        aprsis_filter += f" r/{latitude}/{longitude}/{range_detection}"
+
+    # and enter our eternal loop
     try:
         while True:
             AIS = aprslib.IS(aprsis_callsign, aprsis_passcode)
