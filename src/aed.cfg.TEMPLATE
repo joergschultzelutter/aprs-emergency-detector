@@ -1,10 +1,6 @@
 [aed_config]
 
-# API key for www.aprs.fi access
-# API key NOT_CONFIGURED disable aprs.fi access
-aprsdotfi_api_key = NOT_CONFIGURED
-
-# Lat / Lon coordinates that we intend to monitor
+# lat / lon coordinates that we intend to monitor
 # Format: lat,lon
 # Example: 51.838879,8.32678
 aed_my_position = 51.838879,8.32678
@@ -15,3 +11,10 @@ aed_my_position = 51.838879,8.32678
 #               PRIORITY, EMERGENCY
 
 aed_active_categories = PRIORITY,EMERGENCY
+
+# Range limitation; in case an integer is specified,
+# we will only consider Mic-E position messages from within
+# this range relative to the user's lat/lon position
+# specify value "NONE" if you do not want to limit
+# the range detection
+aed_range_limit = "NONE"

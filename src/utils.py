@@ -34,12 +34,36 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_program_config_from_file(config_filename: str = "aed.cfg.cfg"):
+def get_program_config_from_file(config_filename: str = "aed.cfg"):
+    """
+    Get the program configuration from its config file
+
+    Parameters
+    ==========
+    config_filename: 'str'
+                    Config file name
+
+    Returns
+    =======
+    success: 'bool'
+        True if successful
+    aed_active_categories: 'list'
+        List item, containing the Mic-E categories that we want to examine
+    lat: 'float'
+        Latitude of the user's position
+    lon: 'float'
+        Longitude
+    range_limit: 'int'
+        range detection limit in km, relative to our position
+        see https://www.aprs-is.net/javAPRSFilter.aspx (Range filter) for details
+        'None' if no value has been specified
+    """
     config = configparser.ConfigParser()
 
     try:
         config.read(config_filename)
-        aed_aprsdotfi_api_key = config.get("aed_config", "aprsdotfi_api_key")
+
+        # get lat/lon and examine the data
         aed_watch_areas_string = config.get("aed_config", "aed_my_position")
         if "," not in aed_watch_areas_string:
             logger.info(msg="Config file error; invalid lat/lon position")
@@ -62,8 +86,8 @@ def get_program_config_from_file(config_filename: str = "aed.cfg.cfg"):
             logger.info(msg="Config file error; invalid lat/lon position")
             raise ValueError("Error in config file")
 
+        # get the list of Mic-E categories that we are to examine
         aed_acs = config.get("aed_config", "aed_active_categories")
-
         aed_active_categories = [
             s.strip().upper() for s in aed_acs.split(",") if aed_acs != ""
         ]
@@ -87,22 +111,31 @@ def get_program_config_from_file(config_filename: str = "aed.cfg.cfg"):
                 logger.info(msg=f"Config file error; received category '{ac}'")
                 raise ValueError("Error in config file")
 
+        # Get the range limit
+        aed_range_limit_string = config.get("aed_config", "aed_range_limit")
+
+        aed_range_limit = None
+        if aed_range_limit_string != "NONE":
+            try:
+                aed_range_limit = int(aed_range_limit_string)
+            except ValueError:
+                aed_range_limit = None
+
         success = True
     except Exception as ex:
         logger.info(
             msg="Error in configuration file; Check if your config format is correct."
         )
-        aed_aprsdotfi_api_key = None
-        lat = lon = None
+        lat = lon = aed_range_limit = None
         aed_active_categories = None
         success = False
 
     return (
         success,
-        aed_aprsdotfi_api_key,
         aed_active_categories,
         lat,
         lon,
+        aed_range_limit,
     )
 
 
@@ -143,144 +176,6 @@ def does_file_exist(file_name: str):
     return os.path.isfile(file_name)
 
 
-def make_pretty_sms_messages(
-    message_to_add: str,
-    destination_list: list = None,
-    max_len: int = 67,
-    separator_char: str = " ",
-    add_sep: bool = True,
-    force_outgoing_unicode_messages: bool = False,
-):
-    """
-    Pretty Printer for SMS-type messages. As SMS-type messages are likely to be split
-    up (due to their message len limitations), this function prevents
-    'hard cuts'. Any information that is to be injected into message
-    destination list is going to be checked wrt its length. If
-    len(current content) + len(message_to_add) exceeds the max_len value,
-    the content will not be added to the current list string but to a new
-    string in the list.
-
-    Parameters
-    ==========
-    message_to_add: 'str'
-                    message string that is to be added to the list in a pretty way
-                    If string is longer than 'max_len' chars, we will truncate the information
-    destination_list: 'list'
-                    List with string elements which will be enriched with the
-                    'mesage_to_add' string. Default: empty list aka user wants new list
-    max_len: 'int':
-                    Max length of the list's string len. Default: 67 (APRS)
-    separator_char: 'str'
-                    Separator that is going to be used for dividing the single
-                    elements that the user is going to add
-    add_sep: 'bool'
-                    True =  we will add the separator when more than one item
-                            is in our string. This is the default
-                    False = do not add the separator (e.g. if we add the
-                            very first line of text, then we don't want a
-                            comma straight after the location)
-    force_outgoing_unicode_messages: 'bool'
-                    False = all outgoing UTF-8 content will be down-converted
-                            to ASCII content
-                    True = all outgoing UTF-8 content will sent out 'as is'
-
-    Returns
-    =======
-    destination_list: 'list'
-                    List array, containing 1..n human readable strings with
-                    the "message_to_add' input data
-    """
-    # Dummy handler in case the list is completely empty
-    # or a reference to a list item has not been specified at all
-    # In this case, create an empty list
-    if not destination_list:
-        destination_list = []
-
-    # replace non-permitted APRS characters from the
-    # message text
-    # see APRS specification pg. 71
-    message_to_add = re.sub("[{}|~]+", "", message_to_add)
-
-    # Check if the user wants unicode messages. Default is ASCII
-    if not force_outgoing_unicode_messages:
-        # Convert the message to plain ascii
-        # Unidecode does not take care of German special characters
-        # Therefore, we need to 'translate' them first
-        message_to_add = convert_text_to_plain_ascii(message_string=message_to_add)
-
-    # If new message is longer than max len then split it up with
-    # max chunks of max_len bytes and add it to the array.
-    # This should never happen but better safe than sorry.
-    # Keep in mind that we only transport plain text anyway.
-    if len(message_to_add) > max_len:
-        split_data = message_to_add.split()
-        for split in split_data:
-            # if string is short enough then add it by calling ourself
-            # with the smaller text chunk
-            if len(split) < max_len:
-                destination_list = make_pretty_sms_messages(
-                    message_to_add=split,
-                    destination_list=destination_list,
-                    max_len=max_len,
-                    separator_char=separator_char,
-                    add_sep=add_sep,
-                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
-                )
-            else:
-                # string exceeds max len; split it up and add it as is
-                string_list = split_string_to_string_list(
-                    message_string=split, max_len=max_len
-                )
-                for msg in string_list:
-                    destination_list.append(msg)
-    else:  # try to insert
-        if len(destination_list) > 0:
-            # Get very last element from list
-            string_from_list = destination_list[-1]
-
-            # element + new string > max len? no: add to existing string, else create new element in list
-            if len(string_from_list) + len(message_to_add) + 1 <= max_len:
-                delimiter = ""
-                if len(string_from_list) > 0 and add_sep:
-                    delimiter = separator_char
-                string_from_list = string_from_list + delimiter + message_to_add
-                destination_list[-1] = string_from_list
-            else:
-                destination_list.append(message_to_add)
-        else:
-            destination_list.append(message_to_add)
-
-    return destination_list
-
-
-def split_string_to_string_list(message_string: str, max_len: int = 80):
-    """
-    Force-split the string into chunks of max_len size and return a list of
-    strings. This function is going to be called if the string that the user
-    wants to insert exceeds more than e.g. 80 characters. In this unlikely
-    case, we may not be able to add the string in a pretty format - but
-    we will split it up for the user and ensure that none of the data is lost
-
-    Parameters
-    ==========
-    message_string: 'str'
-                    message string that is to be divided into 1..n strings of 'max_len"
-                    text length
-    max_len: 'int':
-                    Max length of the list's string len. Default = 67 for APRS messages
-
-    Returns
-    =======
-    split_strings: 'list'
-                    List array, containing 1..n strings with a max len of 'max_len'
-    """
-    split_strings = [
-        message_string[index : index + max_len]
-        for index in range(0, len(message_string), max_len)
-    ]
-    return split_strings
-
-
 def convert_text_to_plain_ascii(message_string: str):
     """
     Converts a string to plain ASCII
@@ -304,40 +199,56 @@ def convert_text_to_plain_ascii(message_string: str):
         .replace("ß", "ss")
     )
     message_string = unidecode(message_string)
+
+    # replace non-permitted APRS characters from the
+    # message text
+    # see APRS specification pg. 71
+    message_string = re.sub("[{}|~]+", "", message_string)
+
     return message_string
 
 
-def standard_run_interval_check(interval_value):
+def time_to_live_check(interval_value):
+    """
+    Helper method for 'get_command_line_params'
+
+    Parameters
+    ==========
+    interval_value: 'int'
+                    Value that we need to check
+
+    Returns
+    =======
+    interval_value: 'int'
+        our checked value
+    """
     interval_value = int(interval_value)
     if interval_value < 60:
-        raise argparse.ArgumentTypeError("Minimum standard interval is 60 (minutes)")
+        raise argparse.ArgumentTypeError("Minimum TTL is 60 (minutes)")
     return interval_value
-
-
-def emergency_run_interval_check(interval_value):
-    interval_value = int(interval_value)
-    if interval_value < 15:
-        raise argparse.ArgumentTypeError("Minimum emergency interval is 15 (minutes)")
-    return interval_value
-
-
-def language_check(language_value):
-    # fmt:off
-    supported_languages = ["bg","cs","da","el","en-gb","en-us","es","et","fi","fr","hu","it","ja","lt","lv","nl","pl","pt-br","pt-pt","ro","ru","sk","sl","sv","zh"]
-    # fmt:on
-    if language_value:
-        language_value = language_value.lower()
-        if language_value not in supported_languages:
-            raise argparse.ArgumentTypeError(
-                f"Unsupported target language {language_value}; supported: {supported_languages}"
-            )
-        else:
-            return language_value
-    else:
-        return None
 
 
 def get_command_line_params():
+    """
+    Gets the program command lines and runs a few pre-checks
+    (e.g. if the config file exists etc)
+
+    Parameters
+    ==========
+
+    Returns
+    =======
+    aed_configfile: 'str'
+        program config file. MUST be present
+    aed_messenger_configfile: 'str'
+        Apprise YAML config file for 'full' messages
+    aed_sms_messenger_configfile: 'str'
+        Apprise YAML config file for 'abbreviated' messages
+    generate-test-message: 'bool'
+        True in case a test message is to be generated
+    aed_time_to_live: 'int'
+        Time-to-live in minutes for the expiring dictionary
+    """
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -371,12 +282,12 @@ def get_command_line_params():
     parser.add_argument(
         "--ttl",
         dest="time_to_live",
-        default=8 * 60,
-        type=int,
-        help="Message 'time to live' setting in minutes. Default value is 480m mins = 8h",
+        default=4 * 60,
+        type=time_to_live_check,
+        help="Message 'time to live' setting in minutes. Default value is 240m mins = 4h",
     )
 
-    parser.set_defaults(add_example_data=False)
+    parser.set_defaults(generate_test_message=False)
 
     args = parser.parse_args()
 
@@ -402,6 +313,11 @@ def get_command_line_params():
                 f"Provided short message config file '{aed_sms_messenger_configfile}' does not exist"
             )
 
+    if not aed_messenger_configfile and not aed_sms_messenger_configfile:
+        raise ValueError(
+            "At least one Apprise messenger config file needs to be specified; check the program documentation"
+        )
+
     return (
         aed_configfile,
         aed_messenger_configfile,
@@ -409,13 +325,6 @@ def get_command_line_params():
         aed_time_to_live,
         aed_generate_test_message,
     )
-
-
-def remove_html_content(message_string: str):
-    if message_string:
-        return re.sub("<[^<]+?>", " ", message_string)
-    else:
-        return message_string
 
 
 if __name__ == "__main__":

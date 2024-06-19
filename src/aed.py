@@ -27,6 +27,11 @@ import aprslib
 import sys
 import signal
 from expiringdict import ExpiringDict
+from utils import (
+    signal_term_handler,
+    get_program_config_from_file,
+    get_command_line_params,
+)
 
 # APRS-IS communication parameters
 # This program is only going to receive
@@ -51,11 +56,6 @@ APRS_MICE_EMERGENCY = "Emergency"
 # These are the APRS message types that we actually want to search for
 AED_MICE_MESSAGE_TYPES = (APRS_MICE_EMERGENCY, APRS_MICE_PRIORITY)
 
-# TTL value for messages in hours
-# If we detect the same message content within this time span, we will
-# ignore the message UNLESS content such as position data et al changes
-APRS_TTL = 4
-
 # Max number of APRS TTL entries
 APRS_TTL_MAX_MESSAGES = 1000
 
@@ -63,27 +63,6 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
-def signal_term_handler(signal_number, frame):
-    """
-    Signal handler for SIGTERM signals. Ensures that the program
-    gets terminated in a safe way, thus allowing all databases etc
-    to be written to disc.
-
-    Parameters
-    ==========
-    signal_number:
-        The signal number
-    frame:
-        Signal frame
-
-    Returns
-    =======
-    """
-
-    logger.info(msg="Received SIGTERM; forcing clean program exit")
-    sys.exit(0)
 
 
 def mycallback(raw_aprs_packet):
@@ -95,19 +74,35 @@ def mycallback(raw_aprs_packet):
         if fmt == "mic-e":
             if "mtype" in raw_aprs_packet:
                 mtype = raw_aprs_packet["mtype"]
-                if mtype in AED_MICE_MESSAGE_TYPES:
+                if mtype in aed_mice_message_types:
                     logger.info(raw_aprs_packet)
 
 
 ### main loop
 ###
 if __name__ == "__main__":
+    # get the command line params
+    (
+        aed_configfile,
+        aed_messenger_configfile,
+        aed_sms_messenger_configfile,
+        aed_generate_test_message,
+        aed_time_to_live,
+    ) = get_command_line_params()
+
+    # and then get the static config from our configuration file
+    success, aed_mice_message_types, latitude, longitude = get_program_config_from_file(
+        config_filename=aed_configfile
+    )
+    if not success:
+        sys.exit(0)
+
     # Register the SIGTERM handler; this will allow a safe shutdown of the program
     logger.info(msg="Registering SIGTERM handler for safe shutdown...")
     signal.signal(signal.SIGTERM, signal_term_handler)
 
     message_cache = ExpiringDict(
-        max_len=APRS_TTL_MAX_MESSAGES, max_age_seconds=60 * APRS_TTL
+        max_len=APRS_TTL_MAX_MESSAGES, max_age_seconds=aed_time_to_live
     )
 
     try:
