@@ -9,10 +9,12 @@ This is what you will get if you generate a test message via ```--generate-test-
 
 ### 'Full' message format
 This message format contains literally everything that is needed to identify the beacon's position. The included map is zoomable (may be dependent on your target messenger).
+
 ![Demo](img/test_message_full.jpg)
 
 ### 'Short' message format
 This message format contains the absolute minimum of date but will still permit you to locate the user's position. All messages are APRS-compliant in length, meaning that you can use Apprise in order to forward this message to another ham radio user and/or SMS phone user.
+
 ![Demo](img/test_message_short.jpg)
 
 ## Installation
