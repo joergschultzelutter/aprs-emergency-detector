@@ -22,7 +22,13 @@ import logging
 import apprise
 import os
 
-# from apprise.attachment.memory import AttachMemory
+apprise_memory_attachment_present = False
+try:
+    from apprise.attachment.memory import AttachMemory
+
+    apprise_memory_attachment_present = True
+except ModuleNotFoundError:
+    pass
 import sys
 import staticmaps
 import io
@@ -118,15 +124,18 @@ def generate_apprise_message(
     apprise_attachment = None
     if not abbreviated_message_format:
         image_attachment = render_png_map(
-            aprs_latitude=latitude_aprs, aprs_longitude=longitude_aprs
+            aprs_latitude=latitude_aprs,
+            aprs_longitude=longitude_aprs,
+            memory_object=apprise_memory_attachment_present,
         )
 
-    """
-
         if image_attachment:
-            # Initialize Apprise in-memory object
-            apprise_attachment = AttachMemory(content="attachment-content-here")
-    """
+            if apprise_memory_attachment_present:
+                # Initialize Apprise in-memory object
+                apprise_attachment = AttachMemory(content=image_attachment)
+            else:
+                pass
+
     # convert lat/lon to geodata formats
     zone_number, zone_letter, easting, northing = convert_latlon_to_utm(
         latitude=latitude_aprs, longitude=longitude_aprs
@@ -196,6 +205,7 @@ def generate_apprise_message(
 def render_png_map(
     aprs_latitude: float = None,
     aprs_longitude: float = None,
+    memory_object: bool = False,
 ):
     """
     Render a static PNG image of the user's destination
