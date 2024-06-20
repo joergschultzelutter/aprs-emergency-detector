@@ -32,6 +32,7 @@ from utils import (
     signal_term_handler,
     get_program_config_from_file,
     get_command_line_params,
+    set_message_cache_entry,
 )
 
 logging.basicConfig(
@@ -73,14 +74,26 @@ def mycallback(raw_aprs_packet):
                     if "speed" in raw_aprs_packet:
                         mice_speed = round(raw_aprs_packet["speed"], 1)
                     if "course" in raw_aprs_packet:
-                        mice_course = raw_aprs_packet["course"]
+                        mice_course = round(raw_aprs_packet["course"], 0)
+
+                    # now let's check if we need to send the message or
+                    # if it is still stored in our cache
+                    send_the_message = set_message_cache_entry(
+                        message_cache=message_cache,
+                        callsign=mice_from,
+                        latitude=mice_lat,
+                        longitude=mice_lon,
+                        speed=mice_speed,
+                        course=mice_course,
+                        category=aed_mice_category,
+                    )
 
                     # and generate the Apprise message(s), dependent on how many
                     # config files the user has specified
                     #
                     # this is the "full message" branch which includes images
                     #
-                    if aed_messenger_configfile:
+                    if aed_messenger_configfile and send_the_message:
                         logger.debug(msg="Sending 'short' Apprise message")
                         generate_apprise_message(
                             apprise_config_file=aed_messenger_configfile,
@@ -96,7 +109,7 @@ def mycallback(raw_aprs_packet):
                         )
 
                     # and this is the branch where we only send an abbreviated message to the user
-                    if aed_sms_messenger_configfile:
+                    if aed_sms_messenger_configfile and send_the_message:
                         logger.debug(msg="Sending 'short' Apprise message")
                         generate_apprise_message(
                             apprise_config_file=aed_sms_messenger_configfile,
@@ -127,9 +140,13 @@ if __name__ == "__main__":
     ) = get_command_line_params()
 
     # and then get the static config from our configuration file
-    success, aed_mice_message_types, aed_latitude, aed_longitude, range_detection = (
-        get_program_config_from_file(config_filename=aed_configfile)
-    )
+    (
+        success,
+        aed_mice_message_types,
+        aed_latitude,
+        aed_longitude,
+        range_detection,
+    ) = get_program_config_from_file(config_filename=aed_configfile)
     if not success:
         sys.exit(0)
 
@@ -141,7 +158,6 @@ if __name__ == "__main__":
 
     # Check if we are to generate test messages
     if aed_generate_test_message:
-
         # yes, let's assign some default values and then trigger the test messages
         mice_from = "DF1JSL-1"
         mice_speed = 66.6

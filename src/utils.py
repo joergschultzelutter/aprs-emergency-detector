@@ -235,9 +235,9 @@ def time_to_live_check(interval_value):
         our checked value
     """
     interval_value = int(interval_value)
-    if interval_value < 60:
-        raise argparse.ArgumentTypeError("Minimum TTL is 60 (minutes)")
-    return interval_value
+    if interval_value < 15:
+        raise argparse.ArgumentTypeError("Minimum TTL is 15 (minutes)")
+    return int(interval_value)
 
 
 def get_command_line_params():
@@ -313,7 +313,6 @@ def get_command_line_params():
     # if yes, check if that file exists
     if aed_messenger_configfile:
         if not does_file_exist(aed_messenger_configfile):
-
             logger.error(
                 msg=f"Provided messenger config file '{aed_messenger_configfile}' does not exist"
             )
@@ -341,6 +340,83 @@ def get_command_line_params():
         aed_time_to_live,
         aed_generate_test_message,
     )
+
+
+def set_message_cache_entry(
+    message_cache: ExpiringDict,
+    callsign: str,
+    latitude: float,
+    longitude: float,
+    speed: float,
+    course: int,
+    category: str,
+):
+    """
+    Adds our updates the decaying cache
+
+    Parameters
+    ==========
+    callsign: 'str'
+        User's callsign
+    latitude: 'float'
+        message latitude
+    longitude: 'float'
+        message longitude
+    speed: 'float'
+        message course
+    course: 'int'
+        message course
+    category: 'str'
+        Mic-E message category
+
+    Returns
+    =======
+    success: 'bool'
+        True if we added OR updated an entry and
+             need to send messages to the user
+        False if we still have the same message in
+              our cache and are not required to send
+              a message
+    """
+
+    # generate the potential payload
+    # values have already been rounded in the main function
+    # Therefore, we can process them as is
+    payload = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "speed": speed,
+        "course": course,
+        "category": category,
+    }
+
+    # New entry?
+    if callsign not in message_cache:
+        message_cache[callsign] = payload
+        # indicate that we did something
+        return True
+
+    # We have an existing payload; let's retrieve it
+    existing_payload = message_cache[callsign]
+
+    # now compare the current payload with the existing one
+    if (
+        existing_payload[latitude] == payload[latitude]
+        and existing_payload[longitude] == payload[longitude]
+        and existing_payload[speed] == payload[speed]
+        and existing_payload[course] == payload[course]
+        and existing_payload[category] == payload[category]
+    ):
+        # nothing to do; we will not send that message to the user
+        # as it is still in our decaying cache
+        return False
+
+    # we have at least one value that has changed. Update the existing
+    # entry with the new payload and tell the main function that
+    # we have to send a message to the user
+    message_cache[callsign] = payload
+
+    return True
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ This message format contains the absolute minimum of date but will still permit 
 
 - Clone the repository
 - ```pip install -r requirements.txt```
-- Rename the file [aed.cfg.TEMPLATE](https://github.com/joergschultzelutter/aprs-emergency-detector/blob/master/src/aed.cfg.TEMPLATE) to a file name of your choice. Default name is ```aed.cfg```
+- Rename the file [aed.cfg.TEMPLATE](https://github.com/joergschultzelutter/aprs-emergency-detector/blob/master/src/aed.cfg.TEMPLATE) to a file name of your choice. Program's default name is ```aed.cfg```
 - Amend the program configuration file's default settings
 
       [aed_config]
@@ -49,7 +49,7 @@ This message format contains the absolute minimum of date but will still permit 
       # Value's unit of measure: km
       #
       aed_range_limit = NONE
-- Set the ```aed_my_position```value to your current location
+- Set the ```aed_my_position```value to your current fixed location. If we get a Mic-E message match, ```aed``` will calculate the distance from your coordinates to the message's coordinates. 
 - change the ```aed_active_categories```value and specify the Mic-E categories that you intend to monitor. Separate categories by comma.
 - OPTIONAL: set the ```aed_range_limit``` to an integer value (unit of mesure: km; see https://www.aprs-is.net/javAPRSFilter.aspx) if you intend to limit the lookup process to a range relative to your lat/lon coordinates. Keep the standard value NONE if you do not want to apply range limits.
 - Save the file
