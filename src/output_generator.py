@@ -241,7 +241,7 @@ def render_png_map(
         APRS dynamic longitude (if applicable)
     memory_object: 'bool'
         False:  write a temp file to disk (which later on
-                needs to get deleted
+                needs to get deleted)
         True:   write to memory and do not create a temp file
 
     Returns
