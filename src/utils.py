@@ -36,6 +36,8 @@ from aed_definitions import (
     AED_MICE_IN_SERVICE,
     AED_MICE_OFF_DUTY,
 )
+from expiringdict import ExpiringDict
+
 
 # Set up the global logger variable
 logging.basicConfig(
