@@ -101,8 +101,10 @@ def mycallback(raw_aprs_packet):
                         generate_apprise_message(
                             apprise_config_file=aed_sms_messenger_configfile,
                             callsign=mice_from,
-                            latitude=mice_lat,
-                            longitude=mice_lon,
+                            latitude_aprs=mice_lat,
+                            longitude_aprs=mice_lon,
+                            latitude_aed=aed_latitude,
+                            longitude_aed=aed_longitude,
                             course=mice_course,
                             speed=mice_speed,
                             category=aed_mice_category,
@@ -148,6 +150,7 @@ if __name__ == "__main__":
         mice_lon = 9.5139941
         aed_latitude = 51.9016773  # user may not have configured this setting
         aed_longitude = 9.6425367  # user may not have configured this setting
+        aed_mice_category = "EMERGENCY"
 
         if aed_messenger_configfile:
             logger.debug(msg="Sending 'full' Apprise message")
@@ -172,8 +175,10 @@ if __name__ == "__main__":
             generate_apprise_message(
                 apprise_config_file=aed_sms_messenger_configfile,
                 callsign=mice_from,
-                latitude=mice_lat,
-                longitude=mice_lon,
+                latitude_aprs=mice_lat,
+                longitude_aprs=mice_lon,
+                latitude_aed=aed_latitude,
+                longitude_aed=aed_longitude,
                 course=mice_course,
                 speed=mice_speed,
                 category=aed_mice_category,

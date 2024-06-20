@@ -5,8 +5,15 @@
 This program establishes a read-only connection to [APRS-IS](https://www.aprs-is.net/) and is going to listen to position reports in [Mic-E](http://www.aprs.org/aprs12/mic-e-examples.txt) format. Whenever a Mic-E position report's [message type](https://jgromes.github.io/RadioLib/group__mic__e__message__types.html) matches the program's user configuration, the program is going to generate [Apprise](https://github.com/caronc/apprise/)-based notifications to the messenger accounts provided by the user. Full-length messages as well as APRS-length-compliant short messages can be generated.
 
 ## Examples
+This is what you will get if you generate a test message via ```--generate-test-message```. All coordinates are fixed, meaning that the result will always look like this. The test message assumes that we have received an ```EMERGENCY``` Mic-E position beacon. All examples have been taken from the Telegram messenger.
+
 ### 'Full' message format
+This message format contains literally everything that is needed to identify the beacon's position. The included map is zoomable (may be dependent on your target messenger).
+![Demo](img/test_message_full.jpg)
+
 ### 'Short' message format
+This message format contains the absolute minimum of date but will still permit you to locate the user's position. All messages are APRS-compliant in length, meaning that you can use Apprise in order to forward this message to another ham radio user and/or SMS phone user.
+![Demo](img/test_message_short.jpg)
 
 ## Installation
 
