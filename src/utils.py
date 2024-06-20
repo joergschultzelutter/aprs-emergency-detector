@@ -392,6 +392,11 @@ def set_message_cache_entry(
         "category": category,
     }
 
+    if callsign == "IU2PLZ-7":
+        pass
+        pass
+        pass
+
     # New entry?
     if callsign not in message_cache:
         message_cache[callsign] = payload
@@ -403,14 +408,15 @@ def set_message_cache_entry(
 
     # now compare the current payload with the existing one
     if (
-        existing_payload[latitude] == payload[latitude]
-        and existing_payload[longitude] == payload[longitude]
-        and existing_payload[speed] == payload[speed]
-        and existing_payload[course] == payload[course]
-        and existing_payload[category] == payload[category]
+        existing_payload["latitude"] == payload["latitude"]
+        and existing_payload["longitude"] == payload["longitude"]
+        and existing_payload["speed"] == payload["speed"]
+        and existing_payload["course"] == payload["course"]
+        and existing_payload["category"] == payload["category"]
     ):
         # nothing to do; we will not send that message to the user
         # as it is still in our decaying cache
+        logger.info(f"DUPE: {callsign}")
         return False
 
     # we have at least one value that has changed. Update the existing

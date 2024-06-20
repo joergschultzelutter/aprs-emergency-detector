@@ -54,7 +54,7 @@ This message format contains the absolute minimum of date but will still permit 
 - OPTIONAL: set the ```aed_range_limit``` to an integer value (unit of mesure: km; see https://www.aprs-is.net/javAPRSFilter.aspx) if you intend to limit the lookup process to a range relative to your lat/lon coordinates. Keep the standard value NONE if you do not want to apply range limits.
 - Save the file
 - Copy the [apprise_demo_template.yml](https://github.com/joergschultzelutter/aprs-emergency-detector/blob/master/src/apprise_demo_template.yml) file and rename it to a file name of your choice. Each message target (full message and abbreviated message) requires its own config file; so if you intend to send full messages and abbreviated messages, you need to create two config files. I suggest using proper messenger config file names, e.g. ```full_msg.yml``` and ```sms_msg.yml``` but this choice is up to you.
-- Edit each config file and add the desired [Apprise messenger configuration]([Apprise](https://github.com/caronc/apprise/). Then save the file.
+- Edit each config file and add the desired [Apprise messenger configuration](https://github.com/caronc/apprise/). Then save the file.
 
 ## Command line parameters
 
@@ -67,9 +67,9 @@ This message format contains the absolute minimum of date but will still permit 
 - ```configfile``` is the program's configuration file (containing your lat/lon coordinates et al)
 - ```messenger-config-file``` and ```sms-messenger-config-file``` represent the [Apprise messenger configuration]([Apprise](https://github.com/caronc/apprise/) files. Although both settings are listed as optional, you need to specify at least one of these two messenger configuration files - or the program will exit.
 - ```generate-test-message``` is a boolean switch. If specified, the program will not connect to APRS-IS but is simply going to generate a single test message which is then broadcasted by the two Apprise messenger files (whereas specified). Once broadcasted, the program will self-terminate.
-- ```ttl``` specifies the time-to-live for the message buffer (unit of measure: minutes). If we receive a matching position report from a call sign and neither lat/lon/course/speed/category have changed, then we will ignore that position report and NOT broadcast an Apprise message to the user
+- ```ttl``` specifies the time-to-live for the message buffer (unit of measure: minutes). If we receive a matching position report from a call sign and lat/lon/course/speed/category have NOT changed, then we will ignore that position report and NOT broadcast an Apprise message to the user
 
 ## Known issues and constraints
 
-- As mentioned earlier, 'short' messages are APRS compliant and therefore limited in length to 67 characters. Due to that constraint, 'short' messages will limit its position information to Maidenhead grid info and is going to omit any distance-related information that is in imperial units (sorry, but I am a metric system guy😄)
+- As mentioned earlier, 'short' messages are generated in an APRS compliant format and therefore limited in length to 67 characters. Due to that constraint, 'short' messages will limit its position information to Maidenhead grid info and is going to omit any distance-related information that is in imperial units (sorry, but I am a metric system guy 😄)
 - Unfortunately, APRS-IS does not offer filter settings which allow the program to filter on e.g. Mic-E messages and/or message types. The program does use a filter based on position reports - but everything else is filtered on the fly, meaning that unless you limit the range (see ```aed_range_limit```), the program has to digest a lot of messages, thus resulting in potential CPU load spikes.

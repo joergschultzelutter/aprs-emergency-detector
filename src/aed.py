@@ -124,7 +124,7 @@ def mycallback(raw_aprs_packet):
                             abbreviated_message_format=True,
                         )
 
-                    logger.info(raw_aprs_packet)
+                    logger.debug(raw_aprs_packet)
 
 
 ### main loop
@@ -208,7 +208,7 @@ if __name__ == "__main__":
 
     # set up the expiring dict
     message_cache = ExpiringDict(
-        max_len=APRS_TTL_MAX_MESSAGES, max_age_seconds=aed_time_to_live
+        max_len=APRS_TTL_MAX_MESSAGES, max_age_seconds=aed_time_to_live * 60
     )
 
     # amend the APRS-IS filter in case we have received lat/lon/range
