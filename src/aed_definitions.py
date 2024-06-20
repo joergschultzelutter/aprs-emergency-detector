@@ -66,7 +66,8 @@ AED_APRS_MAPPING = {
     AED_MICE_EMERGENCY: APRS_MICE_EMERGENCY,
 }
 
-# Max number of APRS TTL entries
+# Max number of APRS TTL entries for the
+#ExpiringDict dictionary
 APRS_TTL_MAX_MESSAGES = 1000
 
 if __name__ == "__main__":
