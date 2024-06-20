@@ -19,10 +19,15 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 import logging
+import time
+
 import apprise
 import os
 import tempfile
 
+# the apprise.attachment.memory import requires
+# Apprise version > 1.8.0. We will write temporary
+# files in case this version is not available
 apprise_memory_attachment_present = False
 try:
     from apprise.attachment.memory import AttachMemory
@@ -30,6 +35,7 @@ try:
     apprise_memory_attachment_present = True
 except ModuleNotFoundError:
     pass
+
 import sys
 import staticmaps
 import io
@@ -211,12 +217,19 @@ def generate_apprise_message(
 
     # let's get rid of the temp file, if necessary
     if not apprise_memory_attachment_present:
+        # we deal with a file, so let's apply a grace period
+        # before we delete it. This should be anough time
+        # for Apprise to pick up the file before we remove it
+        time.sleep(1)
         # check if we deal with a temp file name
         if isinstance(apprise_attachment, str):
             # yes, we checked that one before
             # but better safe than sorry
             if does_file_exist(apprise_attachment):
-                os.remove(apprise_attachment)
+                try:
+                    os.remove(apprise_attachment)
+                except:
+                    pass
 
     success = True
 

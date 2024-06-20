@@ -26,7 +26,7 @@ This program establishes a read-only connection to [APRS-IS](https://www.aprs-is
       # Valid values: OFF_DUTY, EN_ROUTE, IN_SERVICE,
       #               RETURNING, COMMITTED, SPECIAL,
       #               PRIORITY, EMERGENCY
-      
+      # Specify 1..n categories from that list. Separate by comma.
       aed_active_categories = PRIORITY,EMERGENCY
       
       # Range limitation; in case an integer is specified,

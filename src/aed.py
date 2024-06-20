@@ -22,7 +22,7 @@
 #
 import logging
 import time
-
+from aed_definitions import *
 import aprslib
 import sys
 import signal
@@ -33,52 +33,6 @@ from utils import (
     get_program_config_from_file,
     get_command_line_params,
 )
-
-# APRS-IS communication parameters
-# This program is only going to receive
-# data; therefore, we do not need a passcode
-aprsis_callsign = "N0CALL"
-aprsis_passcode = "-1"
-aprsis_filter = "t/p"
-aprsis_server_name = "euro.aprs2.net"
-aprsis_server_port = 14580
-AIS = None
-
-# These are the _possible_ Mic-E message types
-APRS_MICE_OFF_DUTY = "M0: Off Duty"
-APRS_MICE_EN_ROUTE = "M1: En Route"
-APRS_MICE_IN_SERVICE = "M2: In Service"
-APRS_MICE_RETURNING = "M3: Returning"
-APRS_MICE_COMMITTED = "M4: Committed"
-APRS_MICE_SPECIAL = "M5: Special"
-APRS_MICE_PRIORITY = "M6: Priority"
-APRS_MICE_EMERGENCY = "Emergency"
-
-# these are the possible Mic-E message types that we might receive
-# from the command line parser
-AED_MICE_OFF_DUTY = "OFF_DUTY"
-AED_MICE_EN_ROUTE = "EN_ROUTE"
-AED_MICE_IN_SERVICE = "IN_SERVICE"
-AED_MICE_RETURNING = "RETURNING"
-AED_MICE_COMMITTED = "COMMITTED"
-AED_MICE_SPECIAL = "SPECIAL"
-AED_MICE_PRIORITY = "PRIORITY"
-AED_MICE_EMERGENCY = "EMERGENCY"
-
-# this is the command line parser vs. message_type_mapping
-AED_APRS_MAPPING = {
-    AED_MICE_OFF_DUTY: APRS_MICE_OFF_DUTY,
-    AED_MICE_EN_ROUTE: APRS_MICE_EN_ROUTE,
-    AED_MICE_IN_SERVICE: APRS_MICE_IN_SERVICE,
-    AED_MICE_RETURNING: APRS_MICE_RETURNING,
-    AED_MICE_COMMITTED: APRS_MICE_COMMITTED,
-    AED_MICE_SPECIAL: APRS_MICE_SPECIAL,
-    AED_MICE_PRIORITY: APRS_MICE_PRIORITY,
-    AED_MICE_EMERGENCY: APRS_MICE_EMERGENCY,
-}
-
-# Max number of APRS TTL entries
-APRS_TTL_MAX_MESSAGES = 1000
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -127,6 +81,7 @@ def mycallback(raw_aprs_packet):
                     # this is the "full message" branch which includes images
                     #
                     if aed_messenger_configfile:
+                        logger.debug(msg="Sending 'short' Apprise message")
                         generate_apprise_message(
                             apprise_config_file=aed_messenger_configfile,
                             callsign=mice_from,
@@ -142,6 +97,7 @@ def mycallback(raw_aprs_packet):
 
                     # and this is the branch where we only send an abbreviated message to the user
                     if aed_sms_messenger_configfile:
+                        logger.debug(msg="Sending 'short' Apprise message")
                         generate_apprise_message(
                             apprise_config_file=aed_sms_messenger_configfile,
                             callsign=mice_from,
@@ -180,6 +136,50 @@ if __name__ == "__main__":
     for aed_mice_message_type in aed_mice_message_types:
         if aed_mice_message_type in AED_APRS_MAPPING:
             aed_categories.append(AED_APRS_MAPPING[aed_mice_message_type])
+
+    # Check if we are to generate test messages
+    if aed_generate_test_message:
+
+        # yes, let's assign some default values and then trigger the test messages
+        mice_from = "DF1JSL-1"
+        mice_speed = 66.6
+        mice_course = 180.0
+        mice_lat = 51.81901
+        mice_lon = 9.5139941
+        aed_latitude = 51.9016773  # user may not have configured this setting
+        aed_longitude = 9.6425367  # user may not have configured this setting
+
+        if aed_messenger_configfile:
+            logger.debug(msg="Sending 'full' Apprise message")
+
+            generate_apprise_message(
+                apprise_config_file=aed_messenger_configfile,
+                callsign=mice_from,
+                latitude_aprs=mice_lat,
+                longitude_aprs=mice_lon,
+                latitude_aed=aed_latitude,
+                longitude_aed=aed_longitude,
+                course=mice_course,
+                speed=mice_speed,
+                category=aed_mice_category,
+                abbreviated_message_format=False,
+            )
+
+        # and this is the branch where we only send an abbreviated message to the user
+        if aed_sms_messenger_configfile:
+            logger.debug(msg="Sending 'short' Apprise message")
+
+            generate_apprise_message(
+                apprise_config_file=aed_sms_messenger_configfile,
+                callsign=mice_from,
+                latitude=mice_lat,
+                longitude=mice_lon,
+                course=mice_course,
+                speed=mice_speed,
+                category=aed_mice_category,
+                abbreviated_message_format=True,
+            )
+        sys.exit(0)
 
     # Register the SIGTERM handler; this will allow a safe shutdown of the program
     logger.info(msg="Registering SIGTERM handler for safe shutdown...")

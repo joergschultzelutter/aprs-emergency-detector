@@ -9,7 +9,7 @@ aed_my_position = 51.838879,8.32678
 # Valid values: OFF_DUTY, EN_ROUTE, IN_SERVICE,
 #               RETURNING, COMMITTED, SPECIAL,
 #               PRIORITY, EMERGENCY
-
+# Specify 1..n categories from that list. Separate by comma.
 aed_active_categories = PRIORITY,EMERGENCY
 
 # Range limitation; in case an integer is specified,

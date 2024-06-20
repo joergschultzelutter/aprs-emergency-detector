@@ -26,6 +26,16 @@ import sys
 import argparse
 import string
 import os.path
+from aed_definitions import (
+    AED_MICE_COMMITTED,
+    AED_MICE_EMERGENCY,
+    AED_MICE_PRIORITY,
+    AED_MICE_RETURNING,
+    AED_MICE_SPECIAL,
+    AED_MICE_EN_ROUTE,
+    AED_MICE_IN_SERVICE,
+    AED_MICE_OFF_DUTY,
+)
 
 # Set up the global logger variable
 logging.basicConfig(
@@ -101,14 +111,14 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
 
         for ac in aed_active_categories:
             if ac not in [
-                "OFF_DUTY",
-                "EN_ROUTE",
-                "IN_SERVICE",
-                "RETURNING",
-                "COMMITTED",
-                "SPECIAL",
-                "PRIORITY",
-                "EMERGENCY",
+                AED_MICE_OFF_DUTY,
+                AED_MICE_EN_ROUTE,
+                AED_MICE_IN_SERVICE,
+                AED_MICE_RETURNING,
+                AED_MICE_COMMITTED,
+                AED_MICE_SPECIAL,
+                AED_MICE_PRIORITY,
+                AED_MICE_EMERGENCY,
             ]:
                 logger.info(msg=f"Config file error; received category '{ac}'")
                 raise ValueError("Error in config file")
