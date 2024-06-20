@@ -21,6 +21,7 @@
 import logging
 import apprise
 import os
+import tempfile
 
 apprise_memory_attachment_present = False
 try:
@@ -39,6 +40,7 @@ from geo_conversion_modules import (
     convert_latlon_to_maidenhead,
     haversine,
 )
+from utils import does_file_exist
 
 # Set up the global logger variable
 logging.basicConfig(
@@ -129,12 +131,23 @@ def generate_apprise_message(
             memory_object=apprise_memory_attachment_present,
         )
 
+        # the image_attachment can either be an IO buffer _or_
+        # a temporary file name, dependent on whether the latest
+        # Apprise version is installed
+        #
+        # If we received a file name, we just pass it as is
+        apprise_attachment = None
         if image_attachment:
+            # memory obbject?
             if apprise_memory_attachment_present:
                 # Initialize Apprise in-memory object
                 apprise_attachment = AttachMemory(content=image_attachment)
             else:
-                pass
+                # String? Then simply assume that we received a file name
+                # and use this one for the attachment
+                if isinstance(image_attachment, str):
+                    if does_file_exist(image_attachment):
+                        apprise_attachment = image_attachment
 
     # convert lat/lon to geodata formats
     zone_number, zone_letter, easting, northing = convert_latlon_to_utm(
@@ -169,7 +182,7 @@ def generate_apprise_message(
         apprise_body += f"<b>UTM:</b> {geo_utm}{newline}"
         apprise_body += f"<b>MGRS:</b> {geo_mgrs}{newline}"
         apprise_body += f"<b>Maidenhead:</b> {geo_maidenhead}{newline}{newline}"
-        apprise_body += f"Distance from my coordinates: {round(distance)} km / {round(distance*0.621371)} mi, bearing {round(bearing)} heading {heading}"
+        apprise_body += f"Distance from my location: {round(distance)} km / {round(distance*0.621371)} mi, bearing {round(bearing)} heading {heading}"
 
     # We are done with preparing the message body
     # Create the message header
@@ -196,6 +209,15 @@ def generate_apprise_message(
             notify_type=notify_type,
         )
 
+    # let's get rid of the temp file, if necessary
+    if not apprise_memory_attachment_present:
+        # check if we deal with a temp file name
+        if isinstance(apprise_attachment, str):
+            # yes, we checked that one before
+            # but better safe than sorry
+            if does_file_exist(apprise_attachment):
+                os.remove(apprise_attachment)
+
     success = True
 
     logger.debug(msg="Finished Apprise message processing")
@@ -214,15 +236,20 @@ def render_png_map(
     Parameters
     ==========
     aprs_latitude : 'float'
-            APRS dynamic latitude (if applicable)
+        APRS dynamic latitude (if applicable)
     aprs_longitude : 'float'
-            APRS dynamic longitude (if applicable)
+        APRS dynamic longitude (if applicable)
+    memory_object: 'bool'
+        False:  write a temp file to disk (which later on
+                needs to get deleted
+        True:   write to memory and do not create a temp file
 
     Returns
     =======
     iobuffer : 'bytes'
-            'None' if not successful, otherwise binary representation
-            of the image
+            'None' if not successful,
+            binary representation of the image if memory_object == True
+            temporary file name reference to image if memory_object == False
     """
 
     assert aprs_latitude, aprs_longitude
@@ -241,26 +268,47 @@ def render_png_map(
         )
     )
 
-    # create a buffer as we need to write to write to memory
-    iobuffer = io.BytesIO()
+    view = None
+    if memory_object:
+        # create a buffer as we need to write to write to memory
+        iobuffer = io.BytesIO()
 
-    try:
-        # Try to render via pycairo - looks nicer
-        if staticmaps.cairo_is_supported():
-            image = context.render_cairo(800, 500)
-            image.write_to_png(iobuffer)
-        else:
-            # if pycairo is not present, render via pillow
-            image = context.render_pillow(800, 500)
-            image.save(iobuffer, format="png")
+        try:
+            # Try to render via pycairo - looks nicer
+            if staticmaps.cairo_is_supported():
+                image = context.render_cairo(800, 500)
+                image.write_to_png(iobuffer)
+            else:
+                # if pycairo is not present, render via pillow
+                image = context.render_pillow(800, 500)
+                image.save(iobuffer, format="png")
 
-        # reset the buffer position
-        iobuffer.seek(0)
+            # reset the buffer position
+            iobuffer.seek(0)
 
-        # get the buffer value and return it
-        view = iobuffer.getvalue()
-    except Exception as ex:
-        view = None
+            # get the buffer value and return it
+            view = iobuffer.getvalue()
+        except Exception as ex:
+            view = None
+    else:
+        # no memory object; write to temp file instead
+        # Create a temporary file name. Attach the file type as
+        # extension; otherwise, Apprise will not render the image
+        file_name = tempfile.NamedTemporaryFile().name + ".png"
+
+        try:
+            # assign the file name to the return value
+            view = file_name
+            # Try to render via pycairo - looks nicer
+            if staticmaps.cairo_is_supported():
+                image = context.render_cairo(800, 500)
+                image.write_to_png(file_name)
+            else:
+                # if pycairo is not present, render via pillow
+                image = context.render_pillow(800, 500)
+                image.save(file_name, format="png")
+        except Exception as ex:
+            view = None
 
     return view
 
