@@ -23,3 +23,19 @@ aed_active_categories = PRIORITY,EMERGENCY
 # Value's unit of measure: km
 #
 aed_range_limit = NONE
+
+# Enable / Disable APRS 1.2 Emergency extensions
+# If set to TRUE or YES, this will emable the APRS 1.2
+# extensions (http://wa8lmf.net/bruninga/aprs/EmergencyCode.txt)
+# Note that by enabling this setting, the list of to-be-processed
+# messages will laregly grow as the program will not only have to
+# digest Mic-E position reports but also regular messages as well
+#
+aed_aprs_extension = FALSE
+
+# TOCALL categories which will trigger a message
+# only used if aed_aprs_extension is enabled
+# valid values are ALARM, ALERT, WARNING,
+# WXALARM and EM
+#
+aed_tocall_categories = ALARM
