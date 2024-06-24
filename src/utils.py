@@ -135,6 +135,9 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
             except ValueError:
                 aed_range_limit = None
 
+        aed_aprs_extension = config.get("aed_config", "aed_aprs_extension").upper()
+        aed_aprs_extension = True if aed_aprs_extension in ("YES", "TRUE") else False
+
         success = True
     except Exception as ex:
         logger.info(
@@ -150,6 +153,7 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
         aed_lat,
         aed_lon,
         aed_range_limit,
+        aed_aprs_extension,
     )
 
 

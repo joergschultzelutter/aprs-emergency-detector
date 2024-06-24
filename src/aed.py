@@ -146,6 +146,7 @@ if __name__ == "__main__":
         aed_latitude,
         aed_longitude,
         range_detection,
+        aed_aprs_extension,
     ) = get_program_config_from_file(config_filename=aed_configfile)
     if not success:
         sys.exit(0)
