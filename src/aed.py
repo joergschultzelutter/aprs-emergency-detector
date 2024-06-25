@@ -62,7 +62,7 @@ def mycallback(raw_aprs_packet: dict):
             if "comment" in raw_aprs_packet:
                 comment = raw_aprs_packet["comment"]
                 for key, value in AED_APRS_EXTENDED_MAPPING.items():
-                    if key in aed_extended_categories:
+                    if value in aed_extended_categories:
                         if comment.startswith(value):
                             aed_mice_category = key
                             break

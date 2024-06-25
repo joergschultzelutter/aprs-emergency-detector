@@ -297,7 +297,7 @@ def get_command_line_params():
         "--configfile",
         default="aed.cfg",
         type=argparse.FileType("r"),
-        help="Program config file name",
+        help="Program config file name. Default name: aed.cfg",
     )
 
     parser.add_argument(
@@ -311,14 +311,14 @@ def get_command_line_params():
         "--sms-messenger-config-file",
         default=None,
         type=str,
-        help="Config file name for sms-like messengers",
+        help="Config file name for sms-like messengers, using an abbreviated notification message",
     )
 
     parser.add_argument(
         "--generate-test-message",
         dest="generate_test_message",
         action="store_true",
-        help="Generates a generic test message (whereas this config is enabled) and exits the program",
+        help="Generates a generic test message (whereas this config is enabled) and exits the program.",
     )
 
     parser.add_argument(

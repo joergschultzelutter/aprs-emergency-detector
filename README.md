@@ -47,6 +47,7 @@ This message format contains the absolute minimum of date but will still permit 
       # Details: https://www.aprs-is.net/javAPRSFilter.aspx
       #
       # Value's unit of measure: km
+      # Example: aed_range_limit = 100 
       #
       aed_range_limit = NONE
 
@@ -78,18 +79,22 @@ This message format contains the absolute minimum of date but will still permit 
 
 ## Command line parameters
 
-        python aed.py   --configfile                 <program config file name> Default name: aed.cfg
-                        --messenger-config-file      [Apprise full-message config file]
-                        --sms-messenger-config-file  [Apprise abbreviated-message config file]
-                        --generate-test-message
-                        --ttl                        [time-to-live for expiring dictionary]
+        usage: aed.py [-h] [--configfile CONFIGFILE] [--messenger-config-file MESSENGER_CONFIG_FILE] [--sms-messenger-config-file SMS_MESSENGER_CONFIG_FILE] [--generate-test-message] [--ttl TIME_TO_LIVE]
+        
+        optional arguments:
+          -h, --help                                              show this help message and exit
+          --configfile                CONFIGFILE                  Program config file name. Default name: aed.cfg
+          --messenger-config-file     MESSENGER_CONFIG_FILE       Config file name for regular messenger full-content messages
+          --sms-messenger-config-file SMS_MESSENGER_CONFIG_FILE   Config file name for sms-like messengers, using an abbreviated notification message
+          --generate-test-message                                 Generates a generic test message (whereas this config is enabled) and exits the program.
+          --ttl TIME_TO_LIVE                                      Message 'time to live' setting in minutes. Default value is 240m mins = 4h
 
-- ```configfile``` is the program's configuration file (containing your lat/lon coordinates et al)
-- ```messenger-config-file``` and ```sms-messenger-config-file``` represent the [Apprise messenger configuration]([Apprise](https://github.com/caronc/apprise/) files. Although both settings are listed as optional, you need to specify at least one of these two messenger configuration files - or the program will exit.
+- ```configfile``` is the program's configuration file (containing your lat/lon coordinates et al). Default name is ```aed.cfg```
+- ```messenger-config-file``` and ```sms-messenger-config-file``` represent the [Apprise messenger configuration]([Apprise](https://github.com/caronc/apprise/) files. Although both settings are listed as optional, you need to specify __at least one__ of these two messenger configuration files - or the program will exit.
 - ```generate-test-message``` is a boolean switch. If specified, the program will not connect to APRS-IS but is simply going to generate a single test message which is then broadcasted by the two Apprise messenger files (whereas specified). Once broadcasted, the program will self-terminate.
 - ```ttl``` specifies the time-to-live for the message buffer (unit of measure: minutes). If we receive a matching position report from a call sign and lat/lon/course/speed/category have NOT changed, then we will ignore that position report and NOT broadcast an Apprise message to the user
 
 ## Known issues and constraints
 
 - As mentioned earlier, 'short' messages are generated in an APRS compliant format and therefore limited in length to 67 characters. Due to that constraint, 'short' messages will limit its position information to Maidenhead grid info and is going to omit any distance-related information that is in imperial units (sorry, but I am a metric system guy 😄)
-- Unfortunately, APRS-IS does not offer filter settings which allow the program to filter on e.g. Mic-E messages and/or message types. The program does use a filter based on position reports - but everything else is filtered on the fly, meaning that unless you limit the range (see ```aed_range_limit```), the program has to digest a lot of messages, thus resulting in potential CPU load spikes - especially when enabling the APRS 1.2 extensions.
+- Unfortunately, APRS-IS does not offer filter settings which allow the program to filter on e.g. Mic-E messages and/or message types containing just these emergency messages. The program does use a filter based on position reports - but everything else is filtered on the fly, meaning that unless you limit the range (see ```aed_range_limit```), the program has to digest a lot of messages, thus resulting in potential CPU load spikes - especially if you enable the APRS 1.2 extensions.
