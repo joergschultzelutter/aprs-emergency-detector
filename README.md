@@ -12,8 +12,8 @@ This message format contains literally everything that is needed to identify the
 
 ![Demo](img/test_message_full.jpg)
 
-### 'Short' message format
-This message format contains the absolute minimum of date but will still permit you to locate the user's position. All messages are APRS-compliant in length, meaning that you can use Apprise in order to forward this message to another ham radio user and/or SMS phone user.
+### 'Short'/'SMS' message format
+This message format contains the absolute minimum of date but will still permit you to locate the user's position. All messages are APRS-compliant in length, meaning that you can use [Apprise](https://github.com/caronc/apprise/) for forwarding this message to another ham radio user and/or SMS phone user.
 
 ![Demo](img/test_message_short.jpg)
 
@@ -73,12 +73,12 @@ This message format contains the absolute minimum of date but will still permit 
 - OPTIONAL: set the ```aed_aprs_extension``` variable to TRUE or YES if you want to enable the [APRS 1.2 Emergency Code extensions](http://wa8lmf.net/bruninga/aprs/EmergencyCode.txt). Note that this setting will tell the program to receive standard APRS messages and APRS object reports, thus increasing the number of messages to be processed.
 - OPTIONAL: set the ```aed_tocall_categories``` to 0..n entries from the list of given values (can also be empty). Note that this setting is only used if ```aed_aprs_extension``` is enabled.
 - Save the file
-- Copy the [apprise_demo_template.yml](https://github.com/joergschultzelutter/aprs-emergency-detector/blob/master/src/apprise_demo_template.yml) file and rename it to a file name of your choice. Each message target (full message and abbreviated message) requires its own config file; so if you intend to send full messages and abbreviated messages, you need to create two config files. I suggest using proper messenger config file names, e.g. ```full_msg.yml``` and ```sms_msg.yml``` but this choice is up to you.
+- Copy the [apprise_demo_template.yml](https://github.com/joergschultzelutter/aprs-emergency-detector/blob/master/src/apprise_demo_template.yml) file and rename it to a file name of your choice. Each message target (full message and abbreviated message) requires its own config file; so if you intend to send full messages and abbreviated messages, you need to create two config files. I suggest using proper messenger config file names, e.g. ```full_msg.yml``` and ```sms_msg.yml``` but this choice is up to you. In order to run the program, you need to specify at least one Apprise config file.
 - Edit each config file and add the desired [Apprise messenger configuration](https://github.com/caronc/apprise/). Then save the file.
 
 ## Command line parameters
 
-        python aed.py   --configfile                 <program config file name>
+        python aed.py   --configfile                 <program config file name> Default name: aed.cfg
                         --messenger-config-file      [Apprise full-message config file]
                         --sms-messenger-config-file  [Apprise abbreviated-message config file]
                         --generate-test-message
@@ -92,4 +92,4 @@ This message format contains the absolute minimum of date but will still permit 
 ## Known issues and constraints
 
 - As mentioned earlier, 'short' messages are generated in an APRS compliant format and therefore limited in length to 67 characters. Due to that constraint, 'short' messages will limit its position information to Maidenhead grid info and is going to omit any distance-related information that is in imperial units (sorry, but I am a metric system guy 😄)
-- Unfortunately, APRS-IS does not offer filter settings which allow the program to filter on e.g. Mic-E messages and/or message types. The program does use a filter based on position reports - but everything else is filtered on the fly, meaning that unless you limit the range (see ```aed_range_limit```), the program has to digest a lot of messages, thus resulting in potential CPU load spikes.
+- Unfortunately, APRS-IS does not offer filter settings which allow the program to filter on e.g. Mic-E messages and/or message types. The program does use a filter based on position reports - but everything else is filtered on the fly, meaning that unless you limit the range (see ```aed_range_limit```), the program has to digest a lot of messages, thus resulting in potential CPU load spikes - especially when enabling the APRS 1.2 extensions.
