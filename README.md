@@ -51,7 +51,7 @@ This message format contains the absolute minimum of date but will still permit 
       aed_range_limit = NONE
 
       # Enable / Disable APRS 1.2 Emergency extensions
-      # If set to TRUE or YES, this will emable the APRS 1.2
+      # If set to TRUE or YES, this will enable the APRS 1.2
       # extensions (http://wa8lmf.net/bruninga/aprs/EmergencyCode.txt)
       # Note that by enabling this setting, the list of to-be-processed
       # messages will laregly grow as the program will not only have to
