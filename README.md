@@ -22,51 +22,55 @@ This message format contains the absolute minimum of date but will still permit 
 - Clone the repository
 - ```pip install -r requirements.txt```
 - Rename the file [aed.cfg.TEMPLATE](https://github.com/joergschultzelutter/aprs-emergency-detector/blob/master/src/aed.cfg.TEMPLATE) to a file name of your choice. Program's default name is ```aed.cfg```
-- Amend the program configuration file's default settings
+  - Amend the program configuration file's default settings
 
-      [aed_config]
+        [aed_config]
       
-      # lat / lon coordinates where we are located at
-      # Format: lat,lon
-      # Example: 51.838879,8.32678
-      aed_my_position = 51.838879,8.32678
+        # lat / lon coordinates where we are located at
+        # Format: lat,lon
+        # Example: 51.838879,8.32678
+        aed_my_position = 51.838879,8.32678
       
-      # APRS Mic-E categories that we are going to monitor
-      # Valid values: OFF_DUTY, EN_ROUTE, IN_SERVICE,
-      #               RETURNING, COMMITTED, SPECIAL,
-      #               PRIORITY, EMERGENCY
-      # Specify 1..n categories from that list. Separate by comma.
-      aed_active_categories = PRIORITY,EMERGENCY
+        # APRS Mic-E categories that we are going to monitor
+        # Valid values: OFF_DUTY, EN_ROUTE, IN_SERVICE,
+        #               RETURNING, COMMITTED, SPECIAL,
+        #               PRIORITY, EMERGENCY
+        # Specify 1..n categories from that list. Separate by comma.
+        aed_active_categories = PRIORITY,EMERGENCY
       
-      # Range limitation; in case an integer is specified,
-      # we will only consider Mic-E position messages from within
-      # this range relative to the user's lat/lon position
-      # specify value NONE if you do not want to limit
-      # the range detection
-      #
-      # Details: https://www.aprs-is.net/javAPRSFilter.aspx
-      #
-      # Value's unit of measure: km
-      # Example: aed_range_limit = 100 
-      #
-      aed_range_limit = NONE
+        # Range limitation; in case an integer is specified,
+        # we will only consider Mic-E position messages from within
+        # this range relative to the user's lat/lon position
+        # specify value NONE if you do not want to limit
+        # the range detection
+        #
+        # Details: https://www.aprs-is.net/javAPRSFilter.aspx
+        #
+        # Value's unit of measure: km
+        # Example: aed_range_limit = 100 
+        #
+        aed_range_limit = NONE
 
-      # Enable / Disable APRS 1.2 Emergency extensions
-      # If set to TRUE or YES, this will enable the APRS 1.2
-      # extensions (http://wa8lmf.net/bruninga/aprs/EmergencyCode.txt)
-      # Note that by enabling this setting, the list of to-be-processed
-      # messages will laregly grow as the program will not only have to
-      # digest Mic-E position reports but also regular messages as well
-      #
-      aed_aprs_extension = FALSE
+        # Enable / Disable APRS 1.2 Emergency extensions
+        # If set to TRUE or YES, this will enable the APRS 1.2
+        # extensions (http://wa8lmf.net/bruninga/aprs/EmergencyCode.txt)
+        # Note that by enabling this setting, the list of to-be-processed
+        # messages will laregly grow as the program will not only have to
+        # digest Mic-E position reports but also regular messages as well
+        #
+        aed_aprs_extension = FALSE
       
-      # TOCALL categories which will trigger a message
-      # only used if aed_aprs_extension is enabled
-      # valid values are ALARM, ALERT, WARNING,
-      # WXALARM and EM
-      # Specify 1..n categories from that list. Separate by comma.
-      #
-      aed_tocall_categories = ALARM
+        # TOCALL categories which will trigger a message
+        # only used if aed_aprs_extension is enabled
+        # valid values are ALARM, ALERT, WARNING,
+        # WXALARM and EM
+        #
+        # Specify 0..n categories from that list. Separate by comma.
+        #
+        # Optional entry; can stay empty, e.g.
+        # aed_tocall_categories =
+        #
+        aed_tocall_categories = ALARM
 
 - Set the ```aed_my_position```value to your current fixed location. If we get a Mic-E message match, ```aed``` will calculate the distance from your coordinates to the message's coordinates. 
 - change the ```aed_active_categories```value and specify the Mic-E categories that you intend to monitor. Separate categories by comma.
