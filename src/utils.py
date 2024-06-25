@@ -35,6 +35,8 @@ from aed_definitions import (
     AED_MICE_EN_ROUTE,
     AED_MICE_IN_SERVICE,
     AED_MICE_OFF_DUTY,
+    AED_MICE_TESTALARM,
+    APRS_EXTENDED_TOCALL_LIST,
 )
 from expiringdict import ExpiringDict
 
@@ -121,8 +123,9 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
                 AED_MICE_SPECIAL,
                 AED_MICE_PRIORITY,
                 AED_MICE_EMERGENCY,
+                AED_MICE_TESTALARM,  # APRS 1.2 extension only
             ]:
-                logger.info(msg=f"Config file error; received category '{ac}'")
+                logger.info(msg=f"Config file error; received unknown category '{ac}'")
                 raise ValueError("Error in config file")
 
         # Get the range limit
@@ -135,13 +138,36 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
             except ValueError:
                 aed_range_limit = None
 
+        aed_aprs_extension = config.get("aed_config", "aed_aprs_extension").upper()
+        aed_aprs_extension = True if aed_aprs_extension in ("YES", "TRUE") else False
+
+        # predefine the list of TOCALL categories; this list can be empty
+        aed_tocall_categories = []
+
+        if aed_aprs_extension:
+            # get the list of TOCALL categories that we are to examine
+            aed_acs = config.get("aed_config", "aed_tocall_categories")
+            aed_tocall_categories_raw = [
+                s.strip().upper() for s in aed_acs.split(",") if aed_acs != ""
+            ]
+            # remove any potential dupes
+            aed_tocall_categories = list(set(aed_tocall_categories_raw))
+            # Note: this list can also be empty
+            for ac in aed_tocall_categories:
+                if ac not in APRS_EXTENDED_TOCALL_LIST:
+                    logger.info(
+                        msg=f"Config file error; received unknown TOCALL category '{ac}'"
+                    )
+                    raise ValueError("Error in config file")
+
         success = True
     except Exception as ex:
         logger.info(
             msg="Error in configuration file; Check if your config format is correct."
         )
         aed_lat = aed_lon = aed_range_limit = None
-        aed_active_categories = None
+        aed_active_categories = aed_tocall_categories = None
+
         success = False
 
     return (
@@ -150,6 +176,8 @@ def get_program_config_from_file(config_filename: str = "aed.cfg"):
         aed_lat,
         aed_lon,
         aed_range_limit,
+        aed_aprs_extension,
+        aed_tocall_categories,
     )
 
 
@@ -269,7 +297,7 @@ def get_command_line_params():
         "--configfile",
         default="aed.cfg",
         type=argparse.FileType("r"),
-        help="Program config file name",
+        help="Program config file name. Default name: aed.cfg",
     )
 
     parser.add_argument(
@@ -283,14 +311,14 @@ def get_command_line_params():
         "--sms-messenger-config-file",
         default=None,
         type=str,
-        help="Config file name for sms-like messengers",
+        help="Config file name for sms-like messengers, using an abbreviated notification message",
     )
 
     parser.add_argument(
         "--generate-test-message",
         dest="generate_test_message",
         action="store_true",
-        help="Generates a generic test message (whereas this config is enabled) and exits the program",
+        help="Generates a generic test message (whereas this config is enabled) and exits the program.",
     )
 
     parser.add_argument(
