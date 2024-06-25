@@ -37,5 +37,6 @@ aed_aprs_extension = FALSE
 # only used if aed_aprs_extension is enabled
 # valid values are ALARM, ALERT, WARNING,
 # WXALARM and EM
+# Specify 1..n categories from that list. Separate by comma.
 #
 aed_tocall_categories = ALARM
